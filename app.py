@@ -17,8 +17,10 @@ if submit:
     if not uploaded_file:
         st.error("Vous devez choisir une image")
     else:
+        st_segmentation_pending = st.empty()
+        st_segmentation_pending.write("Analyse de l'image en cours")
+
         image = Image.open(uploaded_file).convert("RGB")
-        st.write("Segmentation de l'image en cours")
 
         segments = model_image_segmentation(image)
 
@@ -28,12 +30,11 @@ if submit:
             label = segment['label']
             mask = segment['mask']
 
+            # CROP IMAGE A PARTIR DU MASK
             mask_np = np.array(mask)
             ys, xs = np.where(mask_np > 0)
-
             xmin, xmax = xs.min(), xs.max()
             ymin, ymax = ys.min(), ys.max()
-
             crop = image.crop((xmin, ymin, xmax, ymax))
 
             image_to_text_response = model_image_to_text(crop)
@@ -49,19 +50,28 @@ if submit:
             else:
                 st.write(f"Aucune description")
 
+        st_segmentation_pending.empty()
+
         if descriptions:
             st.subheader("Résumé de l'image")
-            st.write(f"En attente ...")
+            st.image(uploaded_file)
+
+            st_pending = st.empty()
+            st_pending.write("En attente ...")
 
             text = " ".join(descriptions)
 
             input_length = len(text.split())
-            max_length = min(60, max(10, input_length))
+            max_length = 100
+            if input_length < max_length:
+                max_length = input_length
+
             summary_response = model_summarization(text, max_length=max_length, min_length=10)
             summary = None
             if summary_response:
                 summary = summary_response[0]['summary_text']
 
+            st_pending.empty()
             if summary:
                 st.write(summary)
             else:
