@@ -48,7 +48,7 @@ if submit:
                 st.write(f"Description : {description}")
                 descriptions.append(description)
             else:
-                st.write(f"Aucune description")
+                st.error(f"Aucune description")
 
         st_segmentation_pending.empty()
 
